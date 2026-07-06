@@ -128,6 +128,11 @@ def fetch_media_info(url, cookie_file=None):
     video_formats.sort(key=video_sort_key)
     audio_formats.sort(key=lambda f: -f.get("abr", 0))
 
+    best_video = {"format_id": "bestvideo+bestaudio/best", "label": "Best (auto)", "ext": "mp4", "filesize": "", "height": 99999, "has_audio": True}
+    best_audio = {"format_id": "bestaudio/best", "label": "Best (auto)", "ext": "mp3", "filesize": "", "abr": 99999}
+    video_formats.insert(0, best_video)
+    audio_formats.insert(0, best_audio)
+
     return {
         "title": title,
         "author": author,

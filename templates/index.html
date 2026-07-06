@@ -59,6 +59,12 @@
                             <span>Analyze Link</span>
                         </button>
                     </form>
+                    <details class="mt-3 text-left">
+                        <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-300 select-none"><i class="fa-solid fa-caret-right mr-1"></i> Advanced — cookies (required for YouTube)</summary>
+                        <div class="mt-2">
+                            <textarea id="cookies-input" rows="4" class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-gray-500 text-xs font-mono" placeholder="Paste Netscape-format cookies here (export with a browser extension like Get cookies.txt)"></textarea>
+                        </div>
+                    </details>
                 </div>
                 <p class="text-xs text-gray-400 mt-3">By using our service you accept our Terms of Service.</p>
             </div>
@@ -211,6 +217,10 @@
         let currentUrl = '';
         let currentMode = 'video';
 
+        function getCookies() {
+            return document.getElementById('cookies-input').value.trim();
+        }
+
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => switchTab(btn.dataset.tab));
         });
@@ -250,7 +260,7 @@
                 const resp = await fetch('/api/fetch', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url }),
+                    body: JSON.stringify({ url, cookies: getCookies() }),
                 });
                 const data = await resp.json();
 
@@ -326,7 +336,7 @@
                 const resp = await fetch('/api/download', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: currentUrl, format_id: formatId, mode }),
+                    body: JSON.stringify({ url: currentUrl, format_id: formatId, mode, cookies: getCookies() }),
                 });
 
                 if (!resp.ok) {

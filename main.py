@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import shutil
 import json
+import re
 from flask import Flask, render_template, request, send_file, jsonify
 
 app = Flask(__name__)
@@ -20,6 +21,34 @@ def ytdlp_cmd():
     return [sys.executable, "-m", "yt_dlp"]
 
 
+def is_youtube(url):
+    return re.search(r"(youtube\.com|youtu\.be)", url)
+
+
+def write_cookie_file(cookies_text):
+    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
+    tmp.write("# Netscape HTTP Cookie File\n")
+    tmp.write(cookies_text)
+    tmp.close()
+    return tmp.name
+
+
+def safe_remove(path):
+    try:
+        os.remove(path)
+    except Exception:
+        pass
+
+
+def build_ytdlp_args(url, cookie_file=None):
+    args = []
+    if is_youtube(url):
+        args += ["--extractor-args", "youtube:player_client=android"]
+    if cookie_file and os.path.exists(cookie_file):
+        args += ["--cookies", cookie_file]
+    return args
+
+
 def format_duration(seconds):
     if not seconds:
         return "00:00"
@@ -31,9 +60,9 @@ def format_duration(seconds):
     return f"{m}:{s:02d}"
 
 
-def fetch_media_info(url):
+def fetch_media_info(url, cookie_file=None):
     result = subprocess.run(
-        ytdlp_cmd() + ["--no-download", "--dump-json", url],
+        ytdlp_cmd() + build_ytdlp_args(url, cookie_file) + ["--no-download", "--dump-json", url],
         capture_output=True,
         text=True,
         timeout=30,
@@ -106,13 +135,20 @@ def index():
 @app.route("/api/fetch", methods=["POST"])
 def api_fetch():
     url = request.json.get("url", "").strip()
+    cookies = request.json.get("cookies", "").strip()
     if not url:
         return jsonify({"error": "Please enter a URL"}), 400
+    cookie_file = None
+    if cookies:
+        cookie_file = write_cookie_file(cookies)
     try:
-        info = fetch_media_info(url)
+        info = fetch_media_info(url, cookie_file)
         return jsonify(info)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        if cookie_file:
+            safe_remove(cookie_file)
 
 
 @app.route("/api/download", methods=["POST"])
@@ -120,14 +156,19 @@ def api_download():
     url = request.json.get("url", "").strip()
     format_id = request.json.get("format_id", "")
     mode = request.json.get("mode", "video")
+    cookies = request.json.get("cookies", "").strip()
 
     if not url or not format_id:
         return jsonify({"error": "Missing parameters"}), 400
 
+    cookie_file = None
+    if cookies:
+        cookie_file = write_cookie_file(cookies)
+
     tmpdir = tempfile.mkdtemp()
     try:
         output_template = os.path.join(tmpdir, "%(title)s.%(ext)s")
-        cmd = ytdlp_cmd() + [
+        cmd = ytdlp_cmd() + build_ytdlp_args(url, cookie_file) + [
             "-f", format_id,
             "-o", output_template,
             "--no-playlist",
@@ -150,6 +191,8 @@ def api_download():
         return send_file(filename, as_attachment=True)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
+        if cookie_file:
+            safe_remove(cookie_file)
 
 
 if __name__ == "__main__":

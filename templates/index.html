@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DownloaderPro - Video & Audio Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%); }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col justify-between">
+
+    <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/" class="flex items-center space-x-2 text-xl font-bold text-indigo-400">
+                <i class="fa-solid fa-cloud-arrow-down text-2xl"></i>
+                <span>Downloader<span class="text-white">Pro</span></span>
+            </a>
+            <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-300">
+                <a href="#how-it-works" class="hover:text-indigo-400 transition-colors">How It Works</a>
+                <a href="#features" class="hover:text-indigo-400 transition-colors">Features</a>
+                <a href="#supported" class="hover:text-indigo-400 transition-colors">Supported Platforms</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <section class="gradient-bg py-16 px-4 text-center">
+            <div class="max-w-3xl mx-auto">
+                <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-4">
+                    Download Video & Audio Content
+                </h1>
+                <p class="text-gray-300 text-base md:text-lg mb-8 max-w-xl mx-auto">
+                    Convert and download your favorite media from multiple online platforms in high quality.
+                </p>
+
+                <div class="bg-gray-800 p-2 rounded-xl shadow-2xl border border-gray-700 max-w-2xl mx-auto">
+                    <form id="download-form" class="flex flex-col md:flex-row gap-2">
+                        <div class="relative flex-grow">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                <i class="fa-solid fa-link"></i>
+                            </span>
+                            <input
+                                type="url"
+                                id="media-url"
+                                required
+                                placeholder="Paste video or music URL here..."
+                                class="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-gray-500 text-sm md:text-base"
+                            >
+                        </div>
+                        <button
+                            type="submit"
+                            class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-lg transition-colors flex items-center justify-center space-x-2 shrink-0"
+                        >
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Analyze Link</span>
+                        </button>
+                    </form>
+                </div>
+                <p class="text-xs text-gray-400 mt-3">By using our service you accept our Terms of Service.</p>
+            </div>
+        </section>
+
+        <section id="results-section" class="max-w-4xl mx-auto px-4 py-12 hidden">
+            <div id="loading-state" class="hidden text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent mb-4"></div>
+                <p class="text-gray-400">Processing URL and fetching available formats...</p>
+            </div>
+
+            <div id="error-state" class="hidden bg-red-900/50 border border-red-700 rounded-xl p-4 text-red-300 text-sm mb-6">
+                <i class="fa-solid fa-circle-exclamation mr-2"></i>
+                <span id="error-message"></span>
+            </div>
+
+            <div id="download-panel" class="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-xl hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1">
+                        <div class="relative aspect-video rounded-lg overflow-hidden bg-gray-950 border border-gray-700 mb-3">
+                            <img id="media-thumbnail" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'><rect width='16' height='9' fill='%23333'/></svg>" alt="Thumbnail" class="w-full h-full object-cover">
+                            <span id="media-duration" class="absolute bottom-2 right-2 bg-black/80 text-xs px-2 py-1 rounded text-white font-mono">00:00</span>
+                        </div>
+                        <h3 id="media-title" class="font-bold text-lg text-white line-clamp-2">Title</h3>
+                        <p id="media-author" class="text-sm text-gray-400 mt-1"></p>
+                    </div>
+
+                    <div class="md:col-span-2 flex flex-col justify-between">
+                        <div>
+                            <div class="flex border-b border-gray-700 mb-4">
+                                <button id="tab-video" class="tab-btn py-2 px-4 border-b-2 border-indigo-500 text-indigo-400 font-semibold focus:outline-none flex items-center space-x-2" data-tab="video">
+                                    <i class="fa-solid fa-video"></i>
+                                    <span>Video</span>
+                                </button>
+                                <button id="tab-audio" class="tab-btn py-2 px-4 border-b-2 border-transparent text-gray-400 hover:text-white font-semibold focus:outline-none flex items-center space-x-2" data-tab="audio">
+                                    <i class="fa-solid fa-music"></i>
+                                    <span>Audio / MP3</span>
+                                </button>
+                            </div>
+
+                            <div id="video-formats" class="space-y-2"></div>
+                            <div id="audio-formats" class="space-y-2 hidden"></div>
+                            <div id="no-formats" class="hidden text-center py-8 text-gray-500">
+                                <i class="fa-solid fa-ban text-2xl mb-2"></i>
+                                <p>No formats available</p>
+                            </div>
+                        </div>
+
+                        <div id="progress-container" class="mt-6 pt-4 border-t border-gray-700 hidden">
+                            <div class="flex justify-between items-center text-xs mb-1">
+                                <span id="progress-status" class="text-gray-300">Preparing download...</span>
+                                <span id="progress-percent" class="font-bold text-indigo-400">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-900 rounded-full h-2 overflow-hidden">
+                                <div id="progress-bar" class="bg-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="max-w-6xl mx-auto px-4 py-16 border-t border-gray-800">
+            <h2 class="text-2xl md:text-3xl font-bold text-center text-white mb-12">Why Choose Our Downloader</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-gray-800/50 border border-gray-800 p-6 rounded-xl hover:border-gray-700 transition-colors">
+                    <div class="bg-indigo-600/20 text-indigo-400 w-12 h-12 flex items-center justify-center rounded-lg mb-4 text-xl"><i class="fa-solid fa-bolt"></i></div>
+                    <h3 class="text-lg font-semibold text-white mb-2">High-Speed Processing</h3>
+                    <p class="text-sm text-gray-400">The links are parsed rapidly to provide direct, fast-loading download links for both video and audio files.</p>
+                </div>
+                <div class="bg-gray-800/50 border border-gray-800 p-6 rounded-xl hover:border-gray-700 transition-colors">
+                    <div class="bg-indigo-600/20 text-indigo-400 w-12 h-12 flex items-center justify-center rounded-lg mb-4 text-xl"><i class="fa-solid fa-sliders"></i></div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Multiple Format Choices</h3>
+                    <p class="text-sm text-gray-400">Select from various resolutions (from 360p up to 4K) or extract high-quality MP3 tracks.</p>
+                </div>
+                <div class="bg-gray-800/50 border border-gray-800 p-6 rounded-xl hover:border-gray-700 transition-colors">
+                    <div class="bg-indigo-600/20 text-indigo-400 w-12 h-12 flex items-center justify-center rounded-lg mb-4 text-xl"><i class="fa-solid fa-shield-halved"></i></div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Safe & Free</h3>
+                    <p class="text-sm text-gray-400">Our tool operates directly from your web browser, requiring no software installations or user registration.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="supported" class="bg-gray-950 py-12 border-t border-gray-800">
+            <div class="max-w-6xl mx-auto px-4 text-center">
+                <h2 class="text-lg font-bold text-gray-400 tracking-wider uppercase mb-6">Supported Platforms</h2>
+                <div class="flex flex-wrap justify-center items-center gap-6 md:gap-12 opacity-60">
+                    <div class="flex items-center space-x-2 text-xl font-medium text-white"><i class="fa-brands fa-youtube text-red-500 text-2xl"></i><span>YouTube</span></div>
+                    <div class="flex items-center space-x-2 text-xl font-medium text-white"><i class="fa-brands fa-soundcloud text-orange-500 text-2xl"></i><span>SoundCloud</span></div>
+                    <div class="flex items-center space-x-2 text-xl font-medium text-white"><i class="fa-brands fa-vimeo text-blue-400 text-2xl"></i><span>Vimeo</span></div>
+                    <div class="flex items-center space-x-2 text-xl font-medium text-white"><i class="fa-brands fa-twitch text-purple-500 text-2xl"></i><span>Twitch</span></div>
+                    <div class="flex items-center space-x-2 text-xl font-medium text-white"><i class="fa-solid fa-music text-green-500 text-2xl"></i><span>Bandcamp</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-it-works" class="max-w-4xl mx-auto px-4 py-16">
+            <h2 class="text-2xl md:text-3xl font-bold text-center text-white mb-12">How to Use</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div class="flex flex-col items-center">
+                    <div class="bg-gray-800 w-12 h-12 flex items-center justify-center rounded-full text-white font-bold mb-4 border border-gray-700">1</div>
+                    <h3 class="font-semibold text-white mb-2">Copy URL</h3>
+                    <p class="text-sm text-gray-400">Copy the link of the video or audio clip you wish to save.</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="bg-gray-800 w-12 h-12 flex items-center justify-center rounded-full text-white font-bold mb-4 border border-gray-700">2</div>
+                    <h3 class="font-semibold text-white mb-2">Paste and Analyze</h3>
+                    <p class="text-sm text-gray-400">Paste the URL in the input box above and click "Analyze Link".</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="bg-gray-800 w-12 h-12 flex items-center justify-center rounded-full text-white font-bold mb-4 border border-gray-700">3</div>
+                    <h3 class="font-semibold text-white mb-2">Select & Download</h3>
+                    <p class="text-sm text-gray-400">Choose your preferred format and click Download.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-950 border-t border-gray-800 py-8">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 space-y-4 md:space-y-0">
+            <div><p>&copy; 2026 DownloaderPro. For personal, educational, and legal-use only.</p></div>
+            <div class="flex space-x-6">
+                <a href="#" class="hover:underline">Terms of Service</a>
+                <a href="#" class="hover:underline">Privacy Policy</a>
+                <a href="#" class="hover:underline">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const downloadForm = document.getElementById('download-form');
+        const mediaUrlInput = document.getElementById('media-url');
+        const resultsSection = document.getElementById('results-section');
+        const loadingState = document.getElementById('loading-state');
+        const errorState = document.getElementById('error-state');
+        const errorMessage = document.getElementById('error-message');
+        const downloadPanel = document.getElementById('download-panel');
+        const mediaTitle = document.getElementById('media-title');
+        const mediaAuthor = document.getElementById('media-author');
+        const mediaThumbnail = document.getElementById('media-thumbnail');
+        const mediaDuration = document.getElementById('media-duration');
+        const videoFormats = document.getElementById('video-formats');
+        const audioFormats = document.getElementById('audio-formats');
+        const noFormats = document.getElementById('no-formats');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressStatus = document.getElementById('progress-status');
+        const progressPercent = document.getElementById('progress-percent');
+
+        let currentUrl = '';
+        let currentMode = 'video';
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        function switchTab(tab) {
+            currentMode = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                if (b.dataset.tab === tab) {
+                    b.className = 'tab-btn py-2 px-4 border-b-2 ' + (tab === 'audio' ? 'border-emerald-500 text-emerald-400' : 'border-indigo-500 text-indigo-400') + ' font-semibold focus:outline-none flex items-center space-x-2';
+                } else {
+                    b.className = 'tab-btn py-2 px-4 border-b-2 border-transparent text-gray-400 hover:text-white font-semibold focus:outline-none flex items-center space-x-2';
+                }
+            });
+            if (tab === 'video') {
+                videoFormats.classList.remove('hidden');
+                audioFormats.classList.add('hidden');
+            } else {
+                audioFormats.classList.remove('hidden');
+                videoFormats.classList.add('hidden');
+            }
+        }
+
+        downloadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = mediaUrlInput.value.trim();
+            if (!url) return;
+
+            currentUrl = url;
+            resultsSection.classList.remove('hidden');
+            loadingState.classList.remove('hidden');
+            errorState.classList.add('hidden');
+            downloadPanel.classList.add('hidden');
+            progressContainer.classList.add('hidden');
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            try {
+                const resp = await fetch('/api/fetch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url }),
+                });
+                const data = await resp.json();
+
+                loadingState.classList.add('hidden');
+
+                if (!resp.ok) {
+                    errorMessage.textContent = data.error || 'Failed to fetch media info';
+                    errorState.classList.remove('hidden');
+                    return;
+                }
+
+                mediaTitle.textContent = data.title || 'Unknown';
+                mediaAuthor.textContent = data.author || '';
+                mediaThumbnail.src = data.thumbnail || mediaThumbnail.src;
+                mediaDuration.textContent = data.duration || '00:00';
+
+                renderFormats('video', data.video_formats || []);
+                renderFormats('audio', data.audio_formats || []);
+                switchTab('video');
+
+                downloadPanel.classList.remove('hidden');
+            } catch (err) {
+                loadingState.classList.add('hidden');
+                errorMessage.textContent = err.message || 'Network error';
+                errorState.classList.remove('hidden');
+            }
+        });
+
+        function renderFormats(type, formats) {
+            const container = type === 'video' ? videoFormats : audioFormats;
+            container.innerHTML = '';
+
+            if (!formats.length) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fa-solid fa-ban text-2xl mb-2"></i><p>No formats available</p></div>';
+                return;
+            }
+
+            formats.forEach(f => {
+                const btnColor = type === 'video' ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-emerald-600 hover:bg-emerald-500';
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-gray-900 p-3 rounded-lg border border-gray-800';
+                div.innerHTML = `
+                    <div>
+                        <span class="font-semibold text-white">${escapeHtml(f.label)}</span>
+                        ${f.filesize ? `<span class="text-xs text-gray-400 ml-2">${escapeHtml(f.filesize)}</span>` : ''}
+                    </div>
+                    <button data-format-id="${escapeHtml(f.format_id)}" class="${btnColor} text-xs font-bold text-white px-4 py-2 rounded transition-colors flex items-center space-x-1">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Download</span>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+
+            container.querySelectorAll('button[data-format-id]').forEach(btn => {
+                btn.addEventListener('click', () => startDownload(btn.dataset.formatId, type));
+            });
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        async function startDownload(formatId, mode) {
+            progressContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressStatus.textContent = 'Starting download...';
+
+            try {
+                const resp = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: currentUrl, format_id: formatId, mode }),
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    progressStatus.textContent = err.error || 'Download failed';
+                    return;
+                }
+
+                progressStatus.textContent = 'Downloading file...';
+                const blob = await resp.blob();
+                const disposition = resp.headers.get('Content-Disposition') || '';
+                const match = disposition.match(/filename="?(.+?)"?$/);
+                const filename = match ? match[1] : 'download.' + (mode === 'audio' ? 'mp3' : 'mp4');
+
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressStatus.textContent = 'Complete';
+
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+                setTimeout(() => progressContainer.classList.add('hidden'), 2000);
+            } catch (err) {
+                progressStatus.textContent = 'Download failed: ' + err.message;
+            }
+        }
+    </script>
+</body>
+</html>

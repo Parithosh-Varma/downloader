@@ -1,5 +1,11 @@
+[phases.setup]
+nixpkgsArchive = "legacy"
+
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = ["python3 -m pip install -r requirements.txt"]
+
+[phases.build]
+cmds = ["python3 -m pip install -r requirements.txt"]
 
 [start]
 cmd = "gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --timeout 300"

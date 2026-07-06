@@ -179,7 +179,7 @@ def api_download():
             "-f", format_id,
             "-o", output_template,
             "--no-playlist",
-            "--print", "filename",
+            "--no-warnings",
             url,
         ]
         if mode == "audio":
@@ -187,19 +187,17 @@ def api_download():
 
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         if result.returncode != 0:
-            return jsonify({"error": result.stderr.strip()}), 500
+            return jsonify({"error": result.stderr.strip() or result.stdout.strip()}), 500
 
-        filename = result.stdout.strip().split("\n")[-1]
-        if not os.path.exists(filename):
-            for f in os.listdir(tmpdir):
-                filename = os.path.join(tmpdir, f)
-                break
+        files = [os.path.join(tmpdir, f) for f in os.listdir(tmpdir)]
+        if not files:
+            return jsonify({"error": "No file produced"}), 500
 
-        return send_file(filename, as_attachment=True)
+        return send_file(files[0], as_attachment=True)
     finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
         if cookie_file:
             safe_remove(cookie_file)
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,11 @@ import tempfile
 import shutil
 import json
 import re
+import logging
 from flask import Flask, render_template, request, send_file, jsonify
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -134,8 +138,9 @@ def index():
 
 @app.route("/api/fetch", methods=["POST"])
 def api_fetch():
-    url = request.json.get("url", "").strip()
-    cookies = request.json.get("cookies", "").strip()
+    body = request.get_json(silent=True) or {}
+    url = body.get("url", "").strip()
+    cookies = body.get("cookies", "").strip()
     if not url:
         return jsonify({"error": "Please enter a URL"}), 400
     cookie_file = None
@@ -145,6 +150,7 @@ def api_fetch():
         info = fetch_media_info(url, cookie_file)
         return jsonify(info)
     except Exception as e:
+        logger.error("fetch failed for %s: %s", url, str(e))
         return jsonify({"error": str(e)}), 500
     finally:
         if cookie_file:
@@ -153,10 +159,11 @@ def api_fetch():
 
 @app.route("/api/download", methods=["POST"])
 def api_download():
-    url = request.json.get("url", "").strip()
-    format_id = request.json.get("format_id", "")
-    mode = request.json.get("mode", "video")
-    cookies = request.json.get("cookies", "").strip()
+    body = request.get_json(silent=True) or {}
+    url = body.get("url", "").strip()
+    format_id = body.get("format_id", "")
+    mode = body.get("mode", "video")
+    cookies = body.get("cookies", "").strip()
 
     if not url or not format_id:
         return jsonify({"error": "Missing parameters"}), 400

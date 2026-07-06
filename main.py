@@ -29,6 +29,10 @@ def is_youtube(url):
     return re.search(r"(youtube\.com|youtu\.be)", url)
 
 
+def video_sort_key(f):
+    return -f.get("height", 0)
+
+
 def write_cookie_file(cookies_text):
     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
     tmp.write("# Netscape HTTP Cookie File\n")
@@ -46,8 +50,6 @@ def safe_remove(path):
 
 def build_ytdlp_args(url, cookie_file=None):
     args = []
-    if is_youtube(url):
-        args += ["--extractor-args", "youtube:player_client=android"]
     if cookie_file and os.path.exists(cookie_file):
         args += ["--cookies", cookie_file]
     return args
@@ -98,7 +100,7 @@ def fetch_media_info(url, cookie_file=None):
             size_str = f"{size_mb:.1f} MB"
 
         if has_video:
-            height = f.get("height") or ""
+            height = f.get("height") or 0
             label = f"{height}p" if height else f.get("format_note", "")
             if f.get("ext"):
                 label += f" {f['ext'].upper()}"
@@ -107,10 +109,11 @@ def fetch_media_info(url, cookie_file=None):
                 "label": label.strip(),
                 "ext": f.get("ext", ""),
                 "filesize": size_str,
+                "height": height,
                 "has_audio": has_audio,
             })
         elif has_audio and not has_video:
-            abr = f.get("abr") or ""
+            abr = f.get("abr") or 0
             label = f"{int(abr)}kbps" if abr else f.get("format_note", "")
             if f.get("ext"):
                 label += f" {f['ext'].upper()}"
@@ -119,7 +122,11 @@ def fetch_media_info(url, cookie_file=None):
                 "label": label.strip(),
                 "ext": f.get("ext", ""),
                 "filesize": size_str,
+                "abr": abr,
             })
+
+    video_formats.sort(key=video_sort_key)
+    audio_formats.sort(key=lambda f: -f.get("abr", 0))
 
     return {
         "title": title,

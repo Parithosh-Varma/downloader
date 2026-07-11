@@ -68,15 +68,17 @@ def format_duration(seconds):
 
 def fetch_media_info(url, cookie_file=None):
     result = subprocess.run(
-        ytdlp_cmd() + build_ytdlp_args(url, cookie_file) + ["--no-download", "--dump-json", url],
+        ytdlp_cmd() + build_ytdlp_args(url, cookie_file) + ["--no-download", "--dump-json", "--no-warnings", url],
         capture_output=True,
         text=True,
         timeout=30,
     )
     if result.returncode != 0:
-        raise Exception(result.stderr.strip())
+        msg = result.stderr.strip() or result.stdout.strip()
+        raise Exception(msg[:500])
 
-    data = json.loads(result.stdout)
+    start = result.stdout.find("{")
+    data = json.loads(result.stdout[start:]) if start != -1 else json.loads(result.stdout)
     title = data.get("title", "Unknown")
     author = data.get("uploader") or data.get("creator") or data.get("channel", "")
     thumbnail = data.get("thumbnail", "")
